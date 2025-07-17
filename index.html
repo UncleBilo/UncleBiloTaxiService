@@ -144,15 +144,11 @@
 
       const telefoonnummer = "31687852294"; // vervang dit met jouw echte nummer
       const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${bericht}`;
-
-      window.open(whatsappUrl, '_blank');
-
-      document.getElementById("successMsg").textContent = "Reservering verstuurd via WhatsApp! Kies nu een betaalmethode:";
-      document.getElementById("paypalLink").href = `https://www.paypal.com/paypalme/jouwnaam/${totaal.toFixed(2)}`;
-      document.getElementById("mollieLink").href = `https://www.mollie.com/pay/taxi?amount=${totaal.toFixed(2)}`;
-      document.getElementById("betalingen").style.display = "block";
-
-      document.getElementById("taxiForm").reset();
+document.getElementById("successMsg").textContent = "Reservering verstuurd via WhatsApp! Kies nu een betaalmethode:";
+document.getElementById("paypalLink").href = `https://www.paypal.com/paypalme/jouwnaam/${totaal.toFixed(2)}`;
+document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
+document.getElementById("betalingen").style.display = "block";
+  
     });
   </script>
 </body>

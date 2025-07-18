@@ -71,63 +71,67 @@
   </div>
 
   <script>
-  let totaalPrijs = 0;
-  let whatsappBericht = "";
+    let totaalPrijs = 0;
+    let whatsappBericht = "";
 
-  document.getElementById("taxiForm").addEventListener("submit", function(e) {
-    e.preventDefault();
+    document.getElementById("taxiForm").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-    const naam = document.getElementById("naam").value;
-    const ophaal = document.getElementById("ophaal").value;
-    const bestemming = document.getElementById("bestemming").value;
-    const datum = document.getElementById("datum").value;
-    const opmerking = document.getElementById("opmerking").value;
+      const naam = document.getElementById("naam").value;
+      const ophaal = document.getElementById("ophaal").value;
+      const bestemming = document.getElementById("bestemming").value;
+      const datum = document.getElementById("datum").value;
+      const opmerking = document.getElementById("opmerking").value;
 
-    const service = new google.maps.DistanceMatrixService();
-    service.getDistanceMatrix(
-      {
-        origins: [ophaal],
-        destinations: [bestemming],
-        travelMode: 'DRIVING',
-      },
-      function(response, status) {
-        if (status !== 'OK') {
-          alert('Er ging iets mis bij het berekenen van de afstand.');
-          return;
+      const service = new google.maps.DistanceMatrixService();
+      service.getDistanceMatrix(
+        {
+          origins: [ophaal],
+          destinations: [bestemming],
+          travelMode: 'DRIVING',
+        },
+        function(response, status) {
+          if (status !== 'OK') {
+            alert('Er ging iets mis bij het berekenen van de afstand.');
+            return;
+          }
+
+          const afstandMeters = response.rows[0].elements[0].distance.value;
+          const duurSeconden = response.rows[0].elements[0].duration.value;
+
+          const afstandKm = afstandMeters / 1000;
+          const minuten = duurSeconden / 60;
+
+          const starttarief = 4.15;
+          const prijsPerKm = 3.05;
+          const prijsPerMinuut = 0.50;
+
+          let totaal = starttarief + (afstandKm * prijsPerKm) + (minuten * prijsPerMinuut);
+          const korting = totaal * 0.25;
+          totaal -= korting;
+          totaalPrijs = totaal.toFixed(2);
+
+          whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
+
+          document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
+          document.getElementById("betalingen").style.display = "block";
+
+          // Mollie link – hier later aanpassen als je een dynamische koppeling hebt
+          document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
+
+          document.getElementById("naBetalingKnop").style.display = "block";
         }
+      );
+    });
 
-        const afstandMeters = response.rows[0].elements[0].distance.value;
-        const duurSeconden = response.rows[0].elements[0].duration.value;
+    document.getElementById("naBetalingKnop").addEventListener("click", function() {
+      const telefoonnummer = "31687852294";
+      const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${whatsappBericht}`;
+      window.open(whatsappUrl, '_blank');
+    });
+  </script>
 
-        const afstandKm = afstandMeters / 1000;
-        const minuten = duurSeconden / 60;
-
-        const starttarief = 4.15;
-        const prijsPerKm = 3.05;
-        const prijsPerMinuut = 0.50;
-
-        let totaal = starttarief + (afstandKm * prijsPerKm) + (minuten * prijsPerMinuut);
-        const korting = totaal * 0.25;
-        totaal -= korting;
-        totaalPrijs = totaal.toFixed(2);
-
-        whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
-
-        document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
-        document.getElementById("betalingen").style.display = "block";
-
-        document.getElementById("mollieLink").href = `https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7`;
-        document.getElementById("naBetalingKnop").style.display = "block";
-      }
-    );
-  });
-
-  document.getElementById("naBetalingKnop").addEventListener("click", function() {
-    const telefoonnummer = "31687852294";
-    const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${whatsappBericht}`;
-    window.open(whatsappUrl, '_blank');
-  });
-</script>
-
-<!-- ✅ En hier hoort de Maps API call te staan -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=JOUW_API_KEY_HIER&libraries=places"></script>
+  <!-- ✅ Google Maps JavaScript API + Places -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDlCMPX3bR473K9tkLrrz66oKVACsUnYo8&libraries=places"></script>
+</body>
+</html>

@@ -83,7 +83,6 @@
       const datum = document.getElementById("datum").value;
       const opmerking = document.getElementById("opmerking").value;
 
-      // Google Maps Distance Matrix API
       const service = new google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
@@ -117,10 +116,8 @@
           document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
           document.getElementById("betalingen").style.display = "block";
 
-          // Mollie payment link (maak link met vast bedrag óf gebruik API later)
-          document.getElementById("mollieLink").href = `https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7`; // ← vaste link of koppel via API
+          document.getElementById("mollieLink").href = `https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7`;
 
-          // Toon knop “ik heb betaald”
           document.getElementById("naBetalingKnop").style.display = "block";
         }
       );
@@ -131,6 +128,9 @@
       const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${whatsappBericht}`;
       window.open(whatsappUrl, '_blank');
     });
+  </script>
 
-<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7ycxkFiNuK1HXfpGjS9nTb953yIrFc8E&libraries=places"></script></body>
+  <!-- ✅ Correcte script om Google Maps API te laden -->
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7ycxkFiNuK1HXfpGjS9nTb953yIrFc8E&libraries=places"></script>
+</body>
 </html>

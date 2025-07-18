@@ -2,288 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Taxi Reserveren</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Taxi Reservering</title>
   <style>
-    * { box-sizing: border-box; }
     body {
       font-family: Arial, sans-serif;
       background: #f2f2f2;
-      padding: 10px;
       margin: 0;
+      padding: 10px;
     }
     .container {
       background: white;
-      width: 100%;
       max-width: 500px;
       margin: 20px auto;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    h2 {
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-size: 0.95rem;
-    }
-    input, textarea {
+    input, textarea, button {
       width: 100%;
+      margin-top: 10px;
       padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
       font-size: 1rem;
     }
     button {
-      margin-top: 20px;
-      padding: 12px;
-      width: 100%;
       background-color: #27ae60;
       color: white;
       border: none;
       border-radius: 5px;
-      font-size: 1.1rem;
+    }
+    .btn-secondary {
+      background-color: #3498db;
+      margin-top: 10px;
     }
     .success {
       color: green;
       text-align: center;
       margin-top: 20px;
-      font-size: 1rem;
-    }
-    .payment-links {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .payment-links a {
-      display: inline-block;
-      margin: 5px;
-      padding: 10px 15px;
-      background-color: #3498db;
-      color: white;
-      border-radius: 5px;
-      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Taxi Reservering</h2>
+    <h2>Taxi Reserveren</h2>
     <form id="taxiForm">
       <label>Naam:</label>
       <input type="text" id="naam" required />
-
       <label>Ophaaladres:</label>
       <input type="text" id="ophaal" required />
-
       <label>Bestemming:</label>
       <input type="text" id="bestemming" required />
-
-      <label>Afstand (in kilometers):</label>
-      <input type="number" id="afstand" required />
-
-      <label>Reistijd (in minuten):</label>
-      <input type="number" id="minuten" required />
-
       <label>Datum & Tijd:</label>
       <input type="datetime-local" id="datum" required />
-
       <label>Opmerkingen:</label>
       <textarea id="opmerking"></textarea>
 
-      <button type="submit">Verstuur Reservering</button>
+      <button type="submit">Bereken & Betaal</button>
     </form>
 
-    <div class="success" id="successMsg"></div>
+    <div id="prijsInfo" class="success"></div>
 
-    <div class="payment-links" id="betalingen" style="display:none">
-      <h3>Kies uw betaalmethode:</h3>
-      <a id="paypalLink" href="#" target="_blank">Betaal met PayPal</a>
-      <a id="mollieLink" href="https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7" target="_blank">Betaal met iDEAL / Mollie</a>
+    <div id="betalingen" style="display:none;">
+      <a id="mollieLink" href="#" target="_blank">
+        <button class="btn-secondary">Betaal met iDEAL</button>
+      </a>
+      <button id="naBetalingKnop" style="display:none;" class="btn-secondary">Ik heb betaald</button>
     </div>
   </div>
 
   <script>
+    let totaalPrijs = 0;
+    let whatsappBericht = "";
+
     document.getElementById("taxiForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
       const naam = document.getElementById("naam").value;
       const ophaal = document.getElementById("ophaal").value;
       const bestemming = document.getElementById("bestemming").value;
-      const afstand = parseFloat(document.getElementById("afstand").value);
-      const minuten = parseFloat(document.getElementById("minuten").value);
       const datum = document.getElementById("datum").value;
       const opmerking = document.getElementById("opmerking").value;
 
-      const starttarief = 4.15;
-      const prijsPerKm = 3.05;
-      const prijsPerMinuut = 0.50;
+      // Google Maps Distance Matrix API
+      const service = new google.maps.DistanceMatrixService();
+      service.getDistanceMatrix(
+        {
+          origins: [ophaal],
+          destinations: [bestemming],
+          travelMode: 'DRIVING',
+        },
+        function(response, status) {
+          if (status !== 'OK') {
+            alert('Er ging iets mis bij het berekenen van de afstand.');
+            return;
+          }
 
-      let totaal = starttarief + (afstand * prijsPerKm) + (minuten * prijsPerMinuut);
-      const korting = totaal * 0.25;
-      totaal = totaal - korting;
+          const afstandMeters = response.rows[0].elements[0].distance.value;
+          const duurSeconden = response.rows[0].elements[0].duration.value;
 
-      const bericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstand} km%0aReistijd: ${minuten} min%0aTotaalprijs (25% korting): €${totaal.toFixed(2)}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
+          const afstandKm = afstandMeters / 1000;
+          const minuten = duurSeconden / 60;
 
+          const starttarief = 4.15;
+          const prijsPerKm = 3.05;
+          const prijsPerMinuut = 0.50;
+
+          let totaal = starttarief + (afstandKm * prijsPerKm) + (minuten * prijsPerMinuut);
+          const korting = totaal * 0.25;
+          totaal -= korting;
+          totaalPrijs = totaal.toFixed(2);
+
+          whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
+
+          document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
+          document.getElementById("betalingen").style.display = "block";
+
+          // Mollie payment link (maak link met vast bedrag óf gebruik API later)
+          document.getElementById("mollieLink").href = `https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7`; // ← vaste link of koppel via API
+
+          // Toon knop “ik heb betaald”
+          document.getElementById("naBetalingKnop").style.display = "block";
+        }
+      );
+    });
+
+    document.getElementById("naBetalingKnop").addEventListener("click", function() {
       const telefoonnummer = "31687852294";
-      const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${bericht}`;
-
+      const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${whatsappBericht}`;
       window.open(whatsappUrl, '_blank');
-
-      document.getElementById("successMsg").textContent = "Reservering verstuurd via WhatsApp! Kies nu een betaalmethode:";
-      document.getElementById("paypalLink").href = `https://www.paypal.com/paypalme/jouwnaam/${totaal.toFixed(2)}`;
-      document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
-      document.getElementById("betalingen").style.display = "block";
-
-      document.getElementById("taxiForm").reset();
     });
   </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Taxi Reserveren</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      padding: 10px;
-      margin: 0;
-    }
-    .container {
-      background: white;
-      width: 100%;
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-size: 0.95rem;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-    button {
-      margin-top: 20px;
-      padding: 12px;
-      width: 100%;
-      background-color: #27ae60;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 1.1rem;
-    }
-    .success {
-      color: green;
-      text-align: center;
-      margin-top: 20px;
-      font-size: 1rem;
-    }
-    .payment-links {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .payment-links a {
-      display: inline-block;
-      margin: 5px;
-      padding: 10px 15px;
-      background-color: #3498db;
-      color: white;
-      border-radius: 5px;
-      text-decoration: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Taxi Reservering</h2>
-    <form id="taxiForm">
-      <label>Naam:</label>
-      <input type="text" id="naam" required />
 
-      <label>Ophaaladres:</label>
-      <input type="text" id="ophaal" required />
-
-      <label>Bestemming:</label>
-      <input type="text" id="bestemming" required />
-
-      <label>Afstand (in kilometers):</label>
-      <input type="number" id="afstand" required />
-
-      <label>Reistijd (in minuten):</label>
-      <input type="number" id="minuten" required />
-
-      <label>Datum & Tijd:</label>
-      <input type="datetime-local" id="datum" required />
-
-      <label>Opmerkingen:</label>
-      <textarea id="opmerking"></textarea>
-
-      <button type="submit">Verstuur Reservering</button>
-    </form>
-
-    <div class="success" id="successMsg"></div>
-
-    <div class="payment-links" id="betalingen" style="display:none">
-      <h3>Kies uw betaalmethode:</h3>
-      <a id="paypalLink" href="#" target="_blank">Betaal met PayPal</a>
-      <a id="mollieLink" href="https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7" target="_blank">Betaal met iDEAL / Mollie</a>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById("taxiForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-
-      const naam = document.getElementById("naam").value;
-      const ophaal = document.getElementById("ophaal").value;
-      const bestemming = document.getElementById("bestemming").value;
-      const afstand = parseFloat(document.getElementById("afstand").value);
-      const minuten = parseFloat(document.getElementById("minuten").value);
-      const datum = document.getElementById("datum").value;
-      const opmerking = document.getElementById("opmerking").value;
-
-      const starttarief = 4.15;
-      const prijsPerKm = 3.05;
-      const prijsPerMinuut = 0.50;
-
-      let totaal = starttarief + (afstand * prijsPerKm) + (minuten * prijsPerMinuut);
-      const korting = totaal * 0.25;
-      totaal = totaal - korting;
-
-      const bericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstand} km%0aReistijd: ${minuten} min%0aTotaalprijs (25% korting): €${totaal.toFixed(2)}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
-
-      const telefoonnummer = "31687852294";
-      const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${bericht}`;
-
-      window.open(whatsappUrl, '_blank');
-
-      document.getElementById("successMsg").textContent = "Reservering verstuurd via WhatsApp! Kies nu een betaalmethode:";
-      document.getElementById("paypalLink").href = `https://www.paypal.com/paypalme/jouwnaam/${totaal.toFixed(2)}`;
-      document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
-      document.getElementById("betalingen").style.display = "block";
-
-      document.getElementById("taxiForm").reset();
-    });
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places">
   </script>
 </body>
 </html>

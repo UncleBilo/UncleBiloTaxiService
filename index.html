@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -54,10 +54,11 @@
       <input type="text" id="bestemming" required />
       <label>Datum & Tijd:</label>
       <input type="datetime-local" id="datum" required />
-      <label>Aantal Personen:</label>
+      <label>Aantal personen:</label>
       <input type="number" id="personen" min="1" required />
-      <label>Aantal Koffers:</label>
+      <label>Koffers:</label>
       <input type="number" id="koffers" min="0" required />
+
       <button type="submit">Bereken & Betaal</button>
     </form>
 
@@ -94,7 +95,8 @@
             travelMode: 'DRIVING',
           },
           function(response, status) {
-            if (status !== 'OK') {
+            if (status !== 'OK' || response.rows[0].elements[0].status !== 'OK') {
+              console.error('Foutstatus:', status, response);
               alert('Er ging iets mis bij het berekenen van de afstand.');
               return;
             }
@@ -114,7 +116,7 @@
             totaal -= korting;
             totaalPrijs = totaal.toFixed(2);
 
-            whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aPersonen: ${personen}%0aKoffers: ${koffers}%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}`;
+            whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}%0aPersonen: ${personen}%0aKoffers: ${koffers}`;
 
             document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
             document.getElementById("betalingen").style.display = "block";
@@ -132,8 +134,10 @@
     }
   </script>
 
+  <!-- LAAT DIT GEEN GEHEIM BLIJVEN OP GITHUB -->
+  <!-- PLAK JE API-KEY ALLEEN LOKAAL OF IN EEN VEILIG .ENV BESTAND -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFO9bLQagszRZgEuRKGDPeaEq8AoR0cSE&libraries=places&callback=initApp">
+    src="https://maps.googleapis.com/maps/api/js?key=VOER_HIER_JE_API_KEY_IN&libraries=places&callback=initApp">
   </script>
 </body>
 </html>

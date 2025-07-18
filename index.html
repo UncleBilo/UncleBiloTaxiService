@@ -85,45 +85,50 @@
         const opmerking = document.getElementById("opmerking").value;
 
         const service = new google.maps.DistanceMatrixService();
-        service.getDistanceMatrix({
-          origins: [ophaal],
-          destinations: [bestemming],
-          travelMode: 'DRIVING',
-        }, function(response, status) {
-          if (status !== 'OK') {
-            console.error('Foutstatus:', status, response);
-            alert('Er ging iets mis bij het berekenen van de afstand.');
-            return;
+        service.getDistanceMatrix(
+          {
+            origins: [ophaal],
+            destinations: [bestemming],
+            travelMode: 'DRIVING',
+            unitSystem: google.maps.UnitSystem.METRIC
+          },
+          function(response, status) {
+            if (status !== 'OK') {
+              alert('Er ging iets mis bij het berekenen van de afstand. Status: ' + status);
+              console.error(response);
+              return;
+            }
+
+            const element = response.rows[0].elements[0];
+
+            if (element.status !== "OK") {
+              alert("Afstand kon niet berekend worden: " + element.status);
+              return;
+            }
+
+            const afstandMeters = element.distance.value;
+            const duurSeconden = element.duration.value;
+
+            const afstandKm = afstandMeters / 1000;
+            const minuten = duurSeconden / 60;
+
+            const starttarief = 4.15;
+            const prijsPerKm = 3.05;
+            const prijsPerMinuut = 0.50;
+
+            let totaal = starttarief + (afstandKm * prijsPerKm) + (minuten * prijsPerMinuut);
+            const korting = totaal * 0.25;
+            totaal -= korting;
+            totaalPrijs = totaal.toFixed(2);
+
+            whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
+
+            document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
+            document.getElementById("betalingen").style.display = "block";
+            document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
+            document.getElementById("naBetalingKnop").style.display = "block";
           }
-
-          const element = response.rows[0].elements[0];
-          if (element.status !== "OK") {
-            alert('Kan afstand niet berekenen. Controleer het adres.');
-            return;
-          }
-
-          const afstandMeters = element.distance.value;
-          const duurSeconden = element.duration.value;
-
-          const afstandKm = afstandMeters / 1000;
-          const minuten = duurSeconden / 60;
-
-          const starttarief = 4.15;
-          const prijsPerKm = 3.05;
-          const prijsPerMinuut = 0.50;
-
-          let totaal = starttarief + (afstandKm * prijsPerKm) + (minuten * prijsPerMinuut);
-          const korting = totaal * 0.25;
-          totaal -= korting;
-          totaalPrijs = totaal.toFixed(2);
-
-          whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}%0aOpmerking: ${opmerking}`;
-
-          document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
-          document.getElementById("betalingen").style.display = "block";
-          document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
-          document.getElementById("naBetalingKnop").style.display = "block";
-        });
+        );
       });
 
       document.getElementById("naBetalingKnop").addEventListener("click", function() {
@@ -134,9 +139,8 @@
     }
   </script>
 
-  <!-- Vervang HIER met je echte API key -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDI4FuXZykulzwsUrzDrCorhU1rOoDzoAM&callback=initApp&libraries=places">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDI4FuXZykulzwsUrzDrCorhU1rOoDzoAM&libraries=places&callback=initApp">
   </script>
 </body>
 </html>

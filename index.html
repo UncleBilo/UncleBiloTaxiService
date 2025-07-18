@@ -93,8 +93,8 @@
           },
           function(response, status) {
             if (status !== 'OK') {
-              console.error('Foutstatus:', status, response);
-              alert('Er ging iets mis bij het berekenen van de afstand.');
+              alert('Er ging iets mis bij het berekenen van de afstand. Controleer of adressen kloppen.');
+              console.error('Google Maps API fout:', status, response);
               return;
             }
 
@@ -131,9 +131,9 @@
     }
   </script>
 
-  <!-- &key=AIzaSyDlCMPX3bR473K9tkLrrz66oKVACsUnYo8 -->
+  <!-- ❗️Gebruik jouw werkende API sleutel hieronder -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=JOUW_API_KEY_HIER&libraries=places&callback=initApp">
+    src="https://maps.googleapis.com/maps/api/js?key=HIER_JOUW_API_KEY&libraries=places&callback=initApp">
   </script>
 </body>
 </html>

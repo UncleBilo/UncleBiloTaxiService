@@ -84,17 +84,19 @@
       const opmerking = document.getElementById("opmerking").value;
 
       const service = new google.maps.DistanceMatrixService();
-      service.getDistanceMatrix(
-        {
-          origins: [ophaal],
-          destinations: [bestemming],
-          travelMode: 'DRIVING',
-        },
-        function(response, status) {
-          if (status !== 'OK') {
-            alert('Er ging iets mis bij het berekenen van de afstand.');
-            return;
-          }
+service.getDistanceMatrix(
+  {
+    origins: [ophaal],
+    destinations: [bestemming],
+    travelMode: 'DRIVING',
+  },
+  function(response, status) {
+    if (status !== 'OK') {
+    }
+
+    // … (rest van je prijsberekening)
+  }
+);
 
           const afstandMeters = response.rows[0].elements[0].distance.value;
           const duurSeconden = response.rows[0].elements[0].duration.value;
@@ -129,9 +131,8 @@
       const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${whatsappBericht}`;
       window.open(whatsappUrl, '_blank');
     });
-  </script>
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDlCMPX3bR473K9tkLrrz66oKVACsUnYo8=places">
+    </script>
 
-  <!-- ✅ Google Maps JavaScript API + Places -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDlCMPX3bR473K9tkLrrz66oKVACsUnYo8&libraries=places"></script>
 </body>
 </html>

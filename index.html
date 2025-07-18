@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Taxi Reserveren</title>
+  <title>Taxi Reservering</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -30,7 +30,10 @@
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
+    }
+    .btn-secondary {
+      background-color: #3498db;
+      margin-top: 10px;
     }
     .success {
       color: green;
@@ -51,28 +54,86 @@
       <input type="text" id="bestemming" required />
       <label>Datum & Tijd:</label>
       <input type="datetime-local" id="datum" required />
-      <label>Opmerkingen:</label>
-      <textarea id="opmerking"></textarea>
-      <button type="submit">Verstuur naar WhatsApp</button>
+      <label>Aantal Personen:</label>
+      <input type="number" id="personen" min="1" required />
+      <label>Aantal Koffers:</label>
+      <input type="number" id="koffers" min="0" required />
+      <button type="submit">Bereken & Betaal</button>
     </form>
+
+    <div id="prijsInfo" class="success"></div>
+
+    <div id="betalingen" style="display:none;">
+      <a id="mollieLink" href="#" target="_blank">
+        <button class="btn-secondary">Betaal met iDEAL</button>
+      </a>
+      <button id="naBetalingKnop" style="display:none;" class="btn-secondary">Ik heb betaald</button>
+    </div>
   </div>
 
   <script>
-    document.getElementById("taxiForm").addEventListener("submit", function(e) {
-      e.preventDefault();
+    let totaalPrijs = 0;
+    let whatsappBericht = "";
 
-      const naam = document.getElementById("naam").value;
-      const ophaal = document.getElementById("ophaal").value;
-      const bestemming = document.getElementById("bestemming").value;
-      const datum = document.getElementById("datum").value;
-      const opmerking = document.getElementById("opmerking").value;
+    function initApp() {
+      document.getElementById("taxiForm").addEventListener("submit", function(e) {
+        e.preventDefault();
 
-      const telefoonnummer = "31687852294"; // <-- Jouw nummer hier (zonder +)
-      const bericht = `🚕 Taxi reservering:%0a%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aDatum & Tijd: ${datum}%0aOpmerkingen: ${opmerking}`;
+        const naam = document.getElementById("naam").value;
+        const ophaal = document.getElementById("ophaal").value;
+        const bestemming = document.getElementById("bestemming").value;
+        const datum = document.getElementById("datum").value;
+        const personen = document.getElementById("personen").value;
+        const koffers = document.getElementById("koffers").value;
 
-      const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${bericht}`;
-      window.open(whatsappUrl, "_blank");
-    });
+        const service = new google.maps.DistanceMatrixService();
+        service.getDistanceMatrix(
+          {
+            origins: [ophaal],
+            destinations: [bestemming],
+            travelMode: 'DRIVING',
+          },
+          function(response, status) {
+            if (status !== 'OK') {
+              alert('Er ging iets mis bij het berekenen van de afstand.');
+              return;
+            }
+
+            const afstandMeters = response.rows[0].elements[0].distance.value;
+            const duurSeconden = response.rows[0].elements[0].duration.value;
+
+            const afstandKm = afstandMeters / 1000;
+            const minuten = duurSeconden / 60;
+
+            const starttarief = 4.15;
+            const prijsPerKm = 3.05;
+            const prijsPerMinuut = 0.50;
+
+            let totaal = starttarief + (afstandKm * prijsPerKm) + (minuten * prijsPerMinuut);
+            const korting = totaal * 0.25;
+            totaal -= korting;
+            totaalPrijs = totaal.toFixed(2);
+
+            whatsappBericht = `Taxi reservering:%0aNaam: ${naam}%0aOphaaladres: ${ophaal}%0aBestemming: ${bestemming}%0aAfstand: ${afstandKm.toFixed(2)} km%0aReistijd: ${minuten.toFixed(0)} minuten%0aPersonen: ${personen}%0aKoffers: ${koffers}%0aTotaalprijs (25% korting): €${totaalPrijs}%0aDatum: ${datum}`;
+
+            document.getElementById("prijsInfo").textContent = `Totaalprijs: €${totaalPrijs} (inclusief 25% korting)`;
+            document.getElementById("betalingen").style.display = "block";
+            document.getElementById("mollieLink").href = "https://payment-links.mollie.com/payment/bJHCKMHLQmwbzipAw5kn7";
+            document.getElementById("naBetalingKnop").style.display = "block";
+          }
+        );
+      });
+
+      document.getElementById("naBetalingKnop").addEventListener("click", function() {
+        const telefoonnummer = "31687852294";
+        const whatsappUrl = `https://wa.me/${telefoonnummer}?text=${whatsappBericht}`;
+        window.open(whatsappUrl, '_blank');
+      });
+    }
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=JOUW_API_KEY_HIER&libraries=places&callback=initApp">
   </script>
 </body>
 </html>
